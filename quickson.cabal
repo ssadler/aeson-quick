@@ -5,7 +5,7 @@ cabal-version:     >= 1.2
 Name:		       Quickson
 Version:	       0.1
 Cabal-Version:     >= 1.2
-License:	       Unliscence
+License:	       BSD3
 License-File:      LICENSE
 Author:		       Scott Sadler
 Homepage:	       https://github.com/ssadler/quickson
