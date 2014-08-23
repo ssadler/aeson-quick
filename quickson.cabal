@@ -1,9 +1,6 @@
-name:              quickson
-version:           1.0
-Build-Type:        Simple
-cabal-version:     >= 1.2
 Name:		       Quickson
-Version:	       0.1
+Version:	       0.1.1
+Build-Type:        Simple
 Cabal-Version:     >= 1.2
 License:	       BSD3
 License-File:      LICENSE
