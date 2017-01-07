@@ -50,7 +50,8 @@ quicksonExecute que = AT.parseEither (drill que >=> parseJSON)
     drill :: Quickson -> Value -> AT.Parser Value
     drill (Ob [l]) = parseJSON >=> flip look l
     drill (Ob keys) = parseJSON >=> forM keys . look >=> return . toJSON
-    drill (Li q) = parseJSON >=> mapM (drill q) >=> return . toJSON
+    drill (Li q) = parseJSON >=> (\l -> mapM (drill q) (l::[Value]))
+                             >=> return . toJSON
     drill Va = return
     look v (k,True,qq) = v.:?k >>= maybe (return Null) (drill qq)
     look v (k,False,qq) = v.:k >>= drill qq
