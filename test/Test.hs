@@ -20,11 +20,11 @@ main = defaultMain $ testGroup "Tests"
   , multipleKeys
   , deepKey
   , keyInArray
+  , complex
   ]
 
 
-oneKey, multipleKeys, deepKey, keyInArray :: TestTree
-
+oneKey :: TestTree
 oneKey = testGroup "one key"
   [ testCase "get" $
       unQue "{a}" simple @?= Just one
@@ -34,6 +34,8 @@ oneKey = testGroup "one key"
   ]
   where simple = d "{\"a\":1}"
 
+
+multipleKeys :: TestTree
 multipleKeys = testGroup "multiple keys"
   [ testCase "get" $
       unQue "{a,b}" multiple @?= Just (one,two)
@@ -43,6 +45,8 @@ multipleKeys = testGroup "multiple keys"
   ]
   where multiple = d "{\"a\":1,\"b\":2}"
 
+
+deepKey :: TestTree
 deepKey = testGroup "deep key"
   [ testCase "get" $
       unQue "{a:{b}}" multilevel @?= Just one
@@ -52,6 +56,8 @@ deepKey = testGroup "deep key"
   ]
   where multilevel = d "{\"a\":{\"b\":1}}"
 
+
+keyInArray :: TestTree
 keyInArray = testGroup "key in array"
   [ testCase "get" $
       unQue "[{a}]" many @?= Just [one,two]
@@ -60,6 +66,16 @@ keyInArray = testGroup "key in array"
       euq "[{a}]" many [True,False] @?= d "[{\"a\":true},{\"a\":false}]"
   ]
   where many = d "[{\"a\":1},{\"a\":2}]"
+
+
+complex :: TestTree
+complex = testGroup "complex"
+  [ testCase "get" $
+      unQue "{a,b:[{a}]}" val @?= Just (one,[[two,one]])
+  , testCase "set" $
+      euq "{a,b:[{a}]}" val (two,[[one]]) @?= d "{\"a\":2,\"b\":[{\"a\":[1]}]}"
+  ]
+  where val = d "{\"a\":1,\"b\":[{\"a\":[2,1]}]}"
 
 
 one, two :: Int
