@@ -19,25 +19,27 @@ main = defaultMain $ testGroup "Tests"
   , deepKey
   , keyInArray
   , complex
+  , optionalKey
+  , nonExistentKey
   , asLens
   ]
 
 
 oneKey :: TestTree
-oneKey = testGroup "one key"
+oneKey = testGroup "oneKey"
   [ testCase "get" $
-      unQue "{a}" simple @?= Just one
+      val .! "{a}" @?= one
 
   , testCase "set" $
-      euq "{a}" simple Null @?= d "{\"a\":null}"
+      euq "{a}" val Null @?= d "{\"a\":null}"
   ]
-  where simple = d "{\"a\":1}"
+  where val = d "{\"a\":1}"
 
 
 multipleKeys :: TestTree
-multipleKeys = testGroup "multiple keys"
+multipleKeys = testGroup "multipleKeys"
   [ testCase "get" $
-      unQue "{a,b}" multiple @?= Just (one,two)
+      multiple .! "{a,b}" @?= (one,two)
 
   , testCase "set" $
       euq "{a,b}" multiple (two,[one,one]) @?= d "{\"a\":2,\"b\":[1,1]}"
@@ -46,9 +48,9 @@ multipleKeys = testGroup "multiple keys"
 
 
 deepKey :: TestTree
-deepKey = testGroup "deep key"
+deepKey = testGroup "deepKey"
   [ testCase "get" $
-      unQue "{a:{b}}" multilevel @?= Just one
+      multilevel .! "{a:{b}}" @?= Just one
 
   , testCase "set" $
       euq "{a:{b}}" multilevel two @?= d "{\"a\":{\"b\":2}}"
@@ -57,9 +59,9 @@ deepKey = testGroup "deep key"
 
 
 keyInArray :: TestTree
-keyInArray = testGroup "key in array"
+keyInArray = testGroup "keyInArray"
   [ testCase "get" $
-      unQue "[{a}]" many @?= Just [one,two]
+      many .! "[{a}]" @?= Just [one,two]
 
   , testCase "set" $
       euq "[{a}]" many [True,False] @?= d "[{\"a\":true},{\"a\":false}]"
@@ -70,21 +72,41 @@ keyInArray = testGroup "key in array"
 complex :: TestTree
 complex = testGroup "complex"
   [ testCase "get" $
-      unQue "{a,b:[{a}]}" val @?= Just (one,[[two,one]])
+      val .! "{a,b:[{a}]}" @?= Just (one,[[two,one]])
   , testCase "set" $
       euq "{a,b:[{a}]}" val (two,[[one]]) @?= d "{\"a\":2,\"b\":[{\"a\":[1]}]}"
   ]
   where val = d "{\"a\":1,\"b\":[{\"a\":[2,1]}]}"
 
 
+optionalKey :: TestTree
+optionalKey = testGroup "optionalKey"
+  [ testCase "get" $
+      val .! "{a?,b?}" @?= (Just one, Nothing :: Maybe Int)
+  ]
+  where val = d "{\"a\":1}"
+
+
+nonExistentKey :: TestTree
+nonExistentKey = testGroup "nonExistentKey"
+  [ testCase "get" $
+      val .? "{b}" @?= (Nothing :: Maybe Int)
+  
+  , testCase "set" $
+      euq "{a}" (d "{}") Null @?= d "{\"a\":null}"
+  ]
+  where val = d "{\"a\":1}"
+
+
 asLens :: TestTree
-asLens = testGroup "as lens"
+asLens = testGroup "asLens"
   [ testCase "get" $
       let l = queLens "{a,b}" :: Lens' Value (Int,Int)
        in val ^. l . _2 @?= two
 
   , testCase "getDoesNotExist" $
-      d "{}" ^. queLens "{a}" @?= (Nothing :: Maybe (Int,Int))
+      -- doesn't work, make a Traversal?
+      d "{}" ^? queLens "{a}" @?= (Nothing :: Maybe (Int,Int))
 
   , testCase "set" $
       (val & (queLens "{a,b}") .~ (two,one)) @?= d "{\"a\":2,\"b\":1}"
@@ -92,7 +114,7 @@ asLens = testGroup "as lens"
   where
     val = d "{\"a\":1,\"b\":2}"
     queLens :: (FromJSON a, ToJSON a) => Structure -> Lens' Value a
-    queLens s = lens (\v -> let Just r = unQue s v in r) (euq s)
+    queLens s = lens (.!s) (euq s)
 
 
 one, two :: Int

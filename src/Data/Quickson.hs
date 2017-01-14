@@ -12,6 +12,8 @@ module Data.Quickson
     , euq
     , que
     , unQue
+    , (.!)
+    , (.?)
     ) where
 
 
@@ -31,13 +33,20 @@ import Lens.Micro.Platform ()
 -- | Structure intermediary representation
 data Structure = Obj [(T.Text, Bool, Structure)]
                | Arr Structure
-               | Val deriving (Show)
+               | Val
 
 
 instance IsString Structure where
   fromString s =
     let e = error $ "Invalid quickson structure: " ++ s
      in either (\_ -> e) id $ parse $ T.pack s
+
+
+instance Show Structure where
+  show (Arr s) = "[" ++ show s ++ "]"
+  show (Obj xs) = "{" ++ drop 1 (concatMap go xs) ++ "}"
+    where go (k,o,Val) = "," ++ T.unpack k ++ if o then "?" else ""
+          go (k,o,s) = "," ++ T.unpack k ++ if o then "?" else "" ++ ":" ++ show s
     
 
 -- | Parse a quickson structure
@@ -68,6 +77,15 @@ que structure = go structure >=> parseJSON
 -- | Execute a quickson structure against a value
 unQue :: FromJSON a => Structure -> Value -> Maybe a
 unQue = AT.parseMaybe . que
+
+
+(.?) :: FromJSON a => Value -> Structure -> Maybe a
+(.?) = flip unQue
+
+
+(.!) :: FromJSON a => Value -> Structure -> a
+(.!) v s = either err id $ AT.parseEither (que s) v
+  where err msg = error $ show s ++ ": " ++ msg ++ " in " ++ show v
 
 
 euq :: ToJSON a => Structure -> Value -> a -> Value
