@@ -7,73 +7,96 @@ module Data.Quickson
 
     -- * Syntax
     -- $syntax
-      Quickson(..)
-    , quicksonParse
-    , quicksonExecute
-    , quickson
+      Structure(..)
+    , parse
+    , euq
+    , que
+    , unQue
     ) where
 
 
-import           Control.Monad
-import           Control.Applicative
-import           Data.Aeson
+import Control.Monad
+import Control.Applicative
+import Data.Aeson hiding (object)
 import qualified Data.Aeson.Types as AT
-import           Data.Attoparsec.ByteString.Char8 as A8
-import qualified Data.ByteString as BS
-import qualified Data.ByteString.Char8 as C8
+import Data.Attoparsec.Text hiding (parse)
+import Data.String
+import qualified Data.Vector as V
 import qualified Data.Text as T
 
+import Lens.Micro
+import Lens.Micro.Platform ()
 
--- | Quickson intermediary representation
-data Quickson = Ob [(T.Text, Bool, Quickson)]
-              | Li Quickson
-              | Va deriving (Show)
 
+-- | Structure intermediary representation
+data Structure = Obj [(T.Text, Bool, Structure)]
+               | Arr Structure
+               | Val deriving (Show)
+
+
+instance IsString Structure where
+  fromString s =
+    let e = error $ "Invalid quickson structure: " ++ s
+     in either (\_ -> e) id $ parse $ T.pack s
+    
 
 -- | Parse a quickson structure
-quicksonParse :: BS.ByteString -> Either String Quickson
-quicksonParse = parseOnly parseStructure
+parse :: T.Text -> Either String Structure
+parse = parseOnly structure
   where
-    parseStructure = parseObject <|> parseArray
-    parseObject = Ob <$> ("{" *> sepBy1 parseLookups (char ',') <* "}")
-    parseArray = Li <$> ("[" *> parseStructure <* "]")
-    parseLookups = (,,) <$> (b2t <$> takeWhile1 (notInClass "?,:}"))
-                        <*> ("?" *> pure True <|> pure False)
-                        <*> (":" *> parseStructure <|> pure Va)
-    b2t = T.pack . C8.unpack
+    structure = object <|> array
+    object = Obj <$> ("{" *> sepBy1 lookups (char ',') <* "}")
+    array = Arr <$> ("[" *> structure <* "]")
+    lookups = (,,) <$> (takeWhile1 (notInClass "?,:}"))
+                   <*> ("?" *> pure True <|> pure False)
+                   <*> (":" *> structure <|> pure Val)
+
+
+que :: FromJSON a => Structure -> Value -> AT.Parser a
+que structure = go structure >=> parseJSON
+  where
+    go :: Structure -> Value -> AT.Parser Value
+    go Val = pure
+    go (Obj [l]) = parseJSON >=> flip look l
+    go (Obj keys) = parseJSON >=> forM keys . look >=> pure . toJSON
+    go (Arr q) = parseJSON >=> (\l -> mapM (go q) (l::[Value]))
+                           >=> pure . toJSON
+    look v (k,True,s) = v.:?k >>= maybe (pure Null) (go s)
+    look v (k,False,s) = v.:k >>= go s
 
 
 -- | Execute a quickson structure against a value
-quicksonExecute :: FromJSON a => Quickson -> Value -> Either String a
-quicksonExecute que = AT.parseEither (drill que >=> parseJSON)
+unQue :: FromJSON a => Structure -> Value -> Maybe a
+unQue = AT.parseMaybe . que
+
+
+euq :: ToJSON a => Structure -> Value -> a -> Value
+euq structure val = go structure val . toJSON
   where
-    drill :: Quickson -> Value -> AT.Parser Value
-    drill (Ob [l]) = parseJSON >=> flip look l
-    drill (Ob keys) = parseJSON >=> forM keys . look >=> return . toJSON
-    drill (Li q) = parseJSON >=> (\l -> mapM (drill q) (l::[Value]))
-                             >=> return . toJSON
-    drill Va = return
-    look v (k,True,qq) = v.:?k >>= maybe (return Null) (drill qq)
-    look v (k,False,qq) = v.:k >>= drill qq
+    go (Val) _ r = r
+    go (Arr s) (Array v) (Array r) = Array $ V.zipWith (go s) v r 
+    go (Obj [ks]) (Object v) r = Object $ update v ks r
+    go (Obj rs) (Object v) (Array r) = Object $
+      let maps = zip rs (V.toList r)
+       in foldl (\v' (ks,r') -> update v' ks r') v maps
+    update v (k,_,s) r = v & ix k %~ \v' -> go s v' r
 
 
--- | Perform a JSON extraction, returning either an error description
---   or a parsed data structure
-quickson :: FromJSON a => BS.ByteString -> BS.ByteString -> Either String a
-quickson structureSpec bs = do
-    val <- eitherDecodeStrict bs
-    query <- quicksonParse structureSpec
-    quicksonExecute query val
+
+--quicksonUpdate :: ToJSON a => Structure -> a -> Value -> Either String Value
+--quicksonUpdate q a v = go q (toJSON a) v
+--  where
+--    go (Obj keys) (Array 
 
 
 -- $use
 --
--- Quickson exports a function `quickson` which enables you to perform quick
+-- Structure exports a function `quickson` which enables you to perform quick
 -- extractions of JSON data using Aeson.
 --
 -- Aeson's type machinery allows decoding of complex data structures using
 -- just the 'decode' function, however, JSON object lookups cannot be encoded
--- using the type system alone. Quickson helps by doing the lookups for you
+-- using the type system alone. Structure helps by doing the lookups for you
 -- so that the type system can do the rest. For example, say you have a JSON
 -- document as such:
 --
@@ -93,5 +116,5 @@ quickson structureSpec bs = do
 -- - Top level objects must be [] or {}
 -- - Lookup: {key}
 -- - Optional lookup: {key?} (yielding Maybe a)
--- - List: []
+-- - Arrst: []
 --

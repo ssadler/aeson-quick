@@ -1,7 +1,7 @@
 Name:              quickson
 Version:           0.3
 Build-Type:        Simple
-Cabal-Version:     >= 1.2
+Cabal-Version:     >= 1.8
 License:           BSD3
 License-File:      LICENSE
 Author:            Scott Sadler
@@ -18,4 +18,27 @@ Library
                    bytestring,
                    aeson,
                    text,
-                   attoparsec
+                   attoparsec,
+                   microlens,
+                   microlens-aeson,
+                   microlens-platform,
+                   vector
+
+test-suite quickson-test
+  type:            exitcode-stdio-1.0
+  hs-source-dirs:  test
+  main-is:         Test.hs
+  build-depends:   quickson,
+                   base,
+                   bytestring,
+                   aeson,
+                   text,
+                   attoparsec,
+                   microlens,
+                   microlens-aeson,
+                   tasty,
+                   tasty-hunit
+
+source-repository head
+  type:     git
+  location: https://github.com/githubuser/cryptoconditions
