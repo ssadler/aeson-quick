@@ -96,7 +96,10 @@ nonExistentKey = testGroup "nonExistentKey"
       euq "{a}" (d "{}") Null `jt` "{\"a\":null}"
 
   , testCase "setDeep" $
-      euq "{a:[{b}]}" (d "{}") Null `jt` "{\"a\":[{\"b\":null}]}"
+      euq "{a:[{b}]}" Null Null `jt` "{\"a\":[{\"b\":null}]}"
+
+  , testCase "setDeepArray" $
+      euq "[{a}]" Null [one,two] `jt` "[{\"a\":1},{\"a\":2}]"
   ]
   where val = d "{\"a\":1}"
 

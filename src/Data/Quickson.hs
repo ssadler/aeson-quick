@@ -92,12 +92,13 @@ unQue = AT.parseMaybe . que
 euq :: ToJSON a => Structure -> Value -> a -> Value
 euq structure val = go structure val . toJSON
   where
-    go (Val) _ r = r
-    go (Arr s) (Array v) (Array r) = Array $ V.zipWith (go s) v r 
-    go (Arr s) Null r = toJSON [go s Null r]
-    go (Obj [ks]) (Object v) r = Object $ update v ks r
-    go (Obj keys) Null r = go (Obj keys) (Object mempty) r
-    go (Obj rs) (Object v) (Array r) = Object $
+    go (Val)      _          r         = r
+    go (Arr s)    (Array v)  (Array r) = Array $ V.zipWith (go s) v r 
+    go (Arr s)    Null       (Array r) = Array $ V.map (go s Null) r
+    go (Arr s)    Null       r         = toJSON [go s Null r]
+    go (Obj [ks]) (Object v) r         = Object $ update v ks r
+    go (Obj keys) Null       r         = go (Obj keys) (Object mempty) r
+    go (Obj rs)   (Object v) (Array r) = Object $
       let maps = zip rs (V.toList r)
        in foldl (\v' (ks,r') -> update v' ks r') v maps
     go a b c = error $ show (a,b,c)
