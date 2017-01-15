@@ -3,7 +3,7 @@
 
 
 import Data.Aeson
-import Data.ByteString (ByteString)
+import Data.ByteString.Lazy (ByteString)
 import Data.Quickson
 
 import Lens.Micro
@@ -31,7 +31,7 @@ oneKey = testGroup "oneKey"
       val .! "{a}" @?= one
 
   , testCase "set" $
-      euq "{a}" val Null @?= d "{\"a\":null}"
+      euq "{a}" val Null `jt` "{\"a\":null}"
   ]
   where val = d "{\"a\":1}"
 
@@ -42,7 +42,7 @@ multipleKeys = testGroup "multipleKeys"
       multiple .! "{a,b}" @?= (one,two)
 
   , testCase "set" $
-      euq "{a,b}" multiple (two,[one,one]) @?= d "{\"a\":2,\"b\":[1,1]}"
+      euq "{a,b}" multiple (two,[one,one]) `jt` "{\"a\":2,\"b\":[1,1]}"
   ]
   where multiple = d "{\"a\":1,\"b\":2}"
 
@@ -53,7 +53,7 @@ deepKey = testGroup "deepKey"
       multilevel .! "{a:{b}}" @?= Just one
 
   , testCase "set" $
-      euq "{a:{b}}" multilevel two @?= d "{\"a\":{\"b\":2}}"
+      euq "{a:{b}}" multilevel two `jt` "{\"a\":{\"b\":2}}"
   ]
   where multilevel = d "{\"a\":{\"b\":1}}"
 
@@ -64,7 +64,7 @@ keyInArray = testGroup "keyInArray"
       many .! "[{a}]" @?= Just [one,two]
 
   , testCase "set" $
-      euq "[{a}]" many [True,False] @?= d "[{\"a\":true},{\"a\":false}]"
+      euq "[{a}]" many [True,False] `jt` "[{\"a\":true},{\"a\":false}]"
   ]
   where many = d "[{\"a\":1},{\"a\":2}]"
 
@@ -74,7 +74,7 @@ complex = testGroup "complex"
   [ testCase "get" $
       val .! "{a,b:[{a}]}" @?= Just (one,[[two,one]])
   , testCase "set" $
-      euq "{a,b:[{a}]}" val (two,[[one]]) @?= d "{\"a\":2,\"b\":[{\"a\":[1]}]}"
+      euq "{a,b:[{a}]}" val (two,[[one]]) `jt` "{\"a\":2,\"b\":[{\"a\":[1]}]}"
   ]
   where val = d "{\"a\":1,\"b\":[{\"a\":[2,1]}]}"
 
@@ -93,7 +93,10 @@ nonExistentKey = testGroup "nonExistentKey"
       val .? "{b}" @?= (Nothing :: Maybe Int)
   
   , testCase "set" $
-      euq "{a}" (d "{}") Null @?= d "{\"a\":null}"
+      euq "{a}" (d "{}") Null `jt` "{\"a\":null}"
+
+  , testCase "setDeep" $
+      euq "{a:[{b}]}" (d "{}") Null `jt` "{\"a\":[{\"b\":null}]}"
   ]
   where val = d "{\"a\":1}"
 
@@ -109,7 +112,7 @@ asLens = testGroup "asLens"
       d "{}" ^? queLens "{a}" @?= (Nothing :: Maybe (Int,Int))
 
   , testCase "set" $
-      (val & (queLens "{a,b}") .~ (two,one)) @?= d "{\"a\":2,\"b\":1}"
+      (val & (queLens "{a,b}") .~ (two,one)) `jt` "{\"a\":2,\"b\":1}"
   ]
   where
     val = d "{\"a\":1,\"b\":2}"
@@ -122,6 +125,12 @@ one = 1
 two = 2
 
 
+jt :: Value -> ByteString -> IO ()
+jt v b = encode v @?= b
+
+
 d :: ByteString -> Value
-d s = let (Just v) = decodeStrict s in v
+d s = case decode s of
+           Just v -> v
+           Nothing -> error $ "Coult not decode JSON: " ++ show s
 

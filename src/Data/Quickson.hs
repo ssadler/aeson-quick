@@ -19,7 +19,7 @@ module Data.Quickson
 
 import Control.Monad
 import Control.Applicative
-import Data.Aeson hiding (object)
+import Data.Aeson
 import qualified Data.Aeson.Types as AT
 import Data.Attoparsec.Text hiding (parse)
 import Data.String
@@ -53,8 +53,8 @@ instance Show Structure where
 parse :: T.Text -> Either String Structure
 parse = parseOnly structure
   where
-    structure = object <|> array
-    object = Obj <$> ("{" *> sepBy1 lookups (char ',') <* "}")
+    structure = object' <|> array
+    object' = Obj <$> ("{" *> sepBy1 lookups (char ',') <* "}")
     array = Arr <$> ("[" *> structure <* "]")
     lookups = (,,) <$> (takeWhile1 (notInClass "?,:}"))
                    <*> ("?" *> pure True <|> pure False)
@@ -93,12 +93,14 @@ euq structure val = go structure val . toJSON
   where
     go (Val) _ r = r
     go (Arr s) (Array v) (Array r) = Array $ V.zipWith (go s) v r 
+    go (Arr s) Null r = toJSON [go s Null r]
     go (Obj [ks]) (Object v) r = Object $ update v ks r
+    go (Obj keys) Null r = go (Obj keys) (Object mempty) r
     go (Obj rs) (Object v) (Array r) = Object $
       let maps = zip rs (V.toList r)
        in foldl (\v' (ks,r') -> update v' ks r') v maps
-    update v (k,_,s) r = v & ix k %~ \v' -> go s v' r
-
+    go a b c = error $ show (a,b,c)
+    update v (k,_,s) r = v & at k %~ \mv' -> Just $ go s (maybe Null id mv') r
 
 
 --quicksonUpdate :: ToJSON a => Structure -> a -> Value -> Either String Value
