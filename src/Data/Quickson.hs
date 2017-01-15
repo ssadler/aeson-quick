@@ -65,18 +65,18 @@ que :: FromJSON a => Structure -> Value -> AT.Parser a
 que structure = go structure >=> parseJSON
   where
     go :: Structure -> Value -> AT.Parser Value
+    go (Obj [l]) = withObject "" (flip look l)
+    go (Obj keys) = withObject "" (forM keys . look) >=> pure . toJSON
+    go (Arr q) = withArray "" (mapM (go q)) >=> pure . Array
     go Val = pure
-    go (Obj [l]) = parseJSON >=> flip look l
-    go (Obj keys) = parseJSON >=> forM keys . look >=> pure . toJSON
-    go (Arr q) = parseJSON >=> (\l -> mapM (go q) (l::[Value]))
-                           >=> pure . toJSON
-    look v (k,True,s) = v.:?k >>= maybe (pure Null) (go s)
     look v (k,False,s) = v.:k >>= go s
+    look v (k,True,s) = v.:?k >>= maybe (pure Null) (go s)
 
 
 -- | Execute a quickson structure against a value
 unQue :: FromJSON a => Structure -> Value -> Maybe a
 unQue = AT.parseMaybe . que
+{-# INLINE unQue #-}
 
 
 (.?) :: FromJSON a => Value -> Structure -> Maybe a

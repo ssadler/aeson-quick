@@ -28,26 +28,35 @@ main = defaultMain
   where
     jsonSimple = d "{\"a\":2,\"b\":[1,1]}" :: Value
     jsonComplex = d $ unsafePerformIO $ BL.readFile "test/complex.json"
-    getSimple = check $ unQue "{a}" :: Value -> Int
-    getComplex = check $ unQue "[{id,ppu,batters:{batter:[{id}]},topping:[{id}]}]" :: Value -> [(Text,Float,[Text],[Text])]
     check :: (Value -> Maybe a) -> Value -> a
     check f = maybe (error "Nothing") id . f
 
-    aesonGetSimple :: Value -> Int
-    aesonGetSimple = check $ parseMaybe $ withObject "" (.:"a")
+    getSimple, aesonGetSimple :: Value -> Int
+    getSimple = check $ unQue "{a}"
+    aesonGetSimple = check $ parseMaybe $ withObject "" (.: "a")
+    
+    getComplex, aesonGetComplex :: Value -> [(Text,Float,[Text],[Text])]
 
-    aesonGetComplex :: Value -> [(Text,Float,[Text],[Text])]
+    getComplex = check $ unQue "[{id,ppu,batters:{batter:[{id}]},topping:[{id}]}]"
+                    :: Value -> [(Text,Float,[Text],[Text])]
+
     aesonGetComplex = check $ parseMaybe $
-         \val -> parseJSON val >>= mapM agcItem
+      \val -> parseJSON val >>= mapM agcItem
+
     agcItem wat = (,,,) <$> wat .: "id"
                         <*> wat .: "ppu"
-                        <*> acgBatters wat
-                        <*> acgToppings wat
-    acgBatters wat = do
-      batters <- (wat.:"batters") >>= withObject "" (.:"batter")
-      parseJSON batters >>= mapM (withObject "" (.:"id"))
-    acgToppings wat = do
-      wat .: "topping" >>= parseJSON >>= mapM (withObject "" (.:"id"))
+                        <*> agcBatters wat
+                        <*> agcToppings wat
+    {-# INLINE agcItem #-}
+
+    agcBatters wat = do
+      (wat.:"batters") >>= withObject "" (.:"batter") >>= mapM (withObject "" (.:"id"))
+    {-# INLINE agcBatters #-}
+
+
+    agcToppings wat = do
+      wat .: "topping" >>= mapM (withObject "" (.:"id"))
+    {-# INLINE agcToppings #-}
 
 
 
