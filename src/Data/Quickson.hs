@@ -23,8 +23,8 @@ import Data.Aeson
 import qualified Data.Aeson.Types as AT
 import Data.Attoparsec.Text hiding (parse)
 import Data.String
-import qualified Data.Vector as V
 import qualified Data.Text as T
+import qualified Data.Vector as V
 
 import Lens.Micro
 import Lens.Micro.Platform ()
@@ -62,15 +62,16 @@ parse = parseOnly structure
 
 
 que :: FromJSON a => Structure -> Value -> AT.Parser a
-que structure = go structure >=> parseJSON
+que structure = {-# SCC "que" #-} ggo structure >=> parseJSON
   where
-    go :: Structure -> Value -> AT.Parser Value
-    go (Obj [l]) = withObject "" (flip look l)
-    go (Obj keys) = withObject "" (forM keys . look) >=> pure . toJSON
-    go (Arr q) = withArray "" (mapM (go q)) >=> pure . Array
-    go Val = pure
-    look v (k,False,s) = v.:k >>= go s
-    look v (k,True,s) = v.:?k >>= maybe (pure Null) (go s)
+    ggo :: Structure -> Value -> AT.Parser Value
+    ggo (Obj [l])  = {-# SCC "go0" #-} withObject "" (flip look l)
+    ggo (Obj ks)   = {-# SCC "go1" #-} withObject "" (forM ks . look) >=> pure . toJSON
+    ggo (Arr q)    = {-# SCC "go2" #-} withArray  "" (mapM $ ggo q)    >=> pure . Array
+    ggo Val = pure
+    look v (k,False,Val) = {-# SCC "go5" #-} v .: k
+    look v (k,False,s) = {-# SCC "go3" #-} v .:  k >>= ggo s
+    look v (k,True,s)  = {-# SCC "go4" #-} v .:? k >>= maybe (pure Null) (ggo s)
 
 
 -- | Execute a quickson structure against a value
