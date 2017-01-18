@@ -1,0 +1,61 @@
+Name:              aeson-quick
+Version:           0.4.0
+Build-Type:        Simple
+Cabal-Version:     >= 1.10
+License:           BSD3
+License-File:      LICENSE
+Author:            Scott Sadler
+Maintainer:        Scott Sadler <scott@scottsadler.de>
+Homepage:          https://github.com/libscott/aeson-quick
+Category:          Text, Web, JSON
+Synopsis:          Quick JSON extractions with Aeson
+Copyright:         (c) 2014-2017 Scott Sadler
+Stability:         Experimental
+
+
+Library
+  Exposed-modules:  Data.Aeson.Quick
+  hs-source-dirs:   .
+  Build-Depends:    base >=4 && <5,
+                    aeson,
+                    attoparsec,
+                    deepseq,
+                    text,
+                    unordered-containers,
+                    vector
+  default-language: Haskell2010
+
+test-suite aeson-quick-test
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  main-is:          Test.hs
+  build-depends:    aeson-quick,
+                    base,
+                    bytestring,
+                    aeson,
+                    microlens,
+                    microlens-aeson,
+                    text,
+                    attoparsec,
+                    tasty,
+                    tasty-hunit
+  default-language: Haskell2010
+
+benchmark benchmark
+  type:             exitcode-stdio-1.0
+  main-is:          Benchmark.hs
+  hs-source-dirs:   test
+  ghc-options:      -Wall -rtsopts -threaded -with-rtsopts=-N
+  build-depends:    base,
+                    aeson-quick,
+                    aeson,
+                    bytestring,
+                    criterion,
+                    microlens,
+                    microlens-aeson,
+                    text
+  default-language: Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/libscott/aeson-quick
