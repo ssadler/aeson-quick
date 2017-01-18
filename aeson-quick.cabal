@@ -9,6 +9,7 @@ Maintainer:        Scott Sadler <scott@scottsadler.de>
 Homepage:          https://github.com/libscott/aeson-quick
 Category:          Text, Web, JSON
 Synopsis:          Quick JSON extractions with Aeson
+Description:       DSL on top of Aeson. This library is /experimental/.
 Copyright:         (c) 2014-2017 Scott Sadler
 Stability:         Experimental
 

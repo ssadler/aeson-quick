@@ -4,19 +4,16 @@
 
 module Data.Aeson.Quick
     (
-    -- * How to use this library
     -- $use
-
-    -- * Syntax
-    -- $syntax
+    -- $examples
       module Ae
+    , (.?)
+    , (.!)
+    , extract
+    , (.%)
+    , build
     , Structure(..)
     , parseStructure
-    , extract
-    , build
-    , (.!)
-    , (.?)
-    , (.%)
     ) where
 
 
@@ -36,8 +33,6 @@ import qualified Data.Vector as V
 import GHC.Generics (Generic)
 
 
-
--- | Structure intermediary representation
 data Structure = Obj [(T.Text, Bool, Structure)]
                | Arr Structure
                | Val
@@ -71,6 +66,43 @@ parseStructure = parseOnly structure
     isKeyChar = isAlphaNum -- TODO
 
 
+{- |
+Extracts instances of 'FromJSON' from a 'Value'
+
+This is a wrapper around 'extract' which does the actual work.
+
+Examples assume 'FromJSON' Foo and 'FromJSON' Bar.
+
+Extract key from object:
+
+>>> "{key}" .? value :: Maybe Foo
+
+Extract list of objects:
+
+>>> "[{key}]" .? value :: Maybe [Foo]
+
+Extract with optional key:
+
+>>> "{key,opt?}" .? value :: Maybe (Foo, Maybe Bar)
+-}
+(.?) :: FromJSON a => Value -> Structure -> Maybe a
+(.?) = AT.parseMaybe . flip extract
+{-# INLINE (.?) #-}
+
+-- TODO: Appropriate infixes?
+
+{- |
+The (very!) unsafe version of '.?'. This can fail very easily, do not depend on this in your program. Will probably be removed.
+-}
+(.!) :: FromJSON a => Value -> Structure -> a
+(.!) v s = either err id $ AT.parseEither (extract s) v
+  where err msg = error $ show s ++ ": " ++ msg ++ " in " ++ show v
+{-# INLINE (.!) #-}
+
+
+{- |
+The 'Parser' that executes a 'Structure' against a 'Value' to return an instance of 'FromJSON'. 
+-}
 extract :: FromJSON a => Structure -> Value -> AT.Parser a
 extract structure = ggo structure >=> parseJSON
   where
@@ -83,18 +115,31 @@ extract structure = ggo structure >=> parseJSON
     look v (k,True,s)    = v .:? k >>= maybe (pure Null) (ggo s)
 
 
-(.?) :: FromJSON a => Value -> Structure -> Maybe a
-(.?) = AT.parseMaybe . flip extract
-{-# INLINE (.?) #-}
+{- |
+Turns data into JSON objects. 
 
--- TODO: Appropriate infixes?
+This is a wrapper around 'build' which does the actual work.
 
-(.!) :: FromJSON a => Value -> Structure -> a
-(.!) v s = either err id $ AT.parseEither (extract s) v
-  where err msg = error $ show s ++ ": " ++ msg ++ " in " ++ show v
-{-# INLINE (.!) #-}
+Build a simple Value:
+
+>>> encode $ "{a}" .% True
+{\"a\": True}
+
+Build a complex Value:
+
+>>> encode $ "[{a}]" '.%' [True, False]
+"[{\"a\":true},{\"a\":false}]"
+-}
+(.%) :: ToJSON a => Structure -> a -> Value
+(.%) s = build s Null
+{-# INLINE (.%) #-}
 
 
+{- |
+Executes a 'Structure' against provided data to update a 'Value'.
+
+Note: /Still has undefined behaviours/, not at all stable.
+-}
 build :: ToJSON a => Structure -> Value -> a -> Value
 build structure val = go structure val . toJSON
   where
@@ -113,37 +158,25 @@ build structure val = go structure val . toJSON
       H.alter (\mv' -> Just $ go s (maybe Null id mv') r) k v
 
 
-(.%) :: ToJSON a => Structure -> a -> Value
-(.%) s = build s Null
-{-# INLINE (.%) #-}
-
-
 -- $use
 --
--- Structure exports a function `quickson` which enables you to perform quick
--- extractions of JSON data using Aeson.
+-- aeson-quick is a library for terse marshalling of data to and from aeson's
+-- 'Value'.
 --
--- Aeson's type machinery allows decoding of complex data structures using
--- just the 'decode' function, however, JSON object lookups cannot be encoded
--- using the type system alone. Structure helps by doing the lookups for you
--- so that the type system can do the rest. For example, say you have a JSON
--- document as such:
+-- It works on the observation that by turning objects into tuples inside
+-- the 'Value', the type system can be employed to do more of the work.
 --
--- > { "name": "bob", "age": 25, "hobbies": [{"name": "Tennis"}] }
+-- For example, given the JSON:
 --
--- And you'd like to turn this into a `(String, Maybe Int, [String])` with
--- minimal fuss:
+-- > { "name": "bob"
+-- > , "age": 29
+-- > , "hobbies": [{"name": "tennis"}, {"name": "cooking"}]
+-- > }
 --
--- > >>> type Hobbyist = (String, Maybe Int, [String])
--- > >>> let eitherResult = quickson "{name,age?,hobbies:[{name}]}" jsonDoc :: Either String Hobbyist
--- > Right ("bob",Just 25,["Tennis"])
+-- You can write: 
 --
--- So the structure specification is just to remove the objects so that the type
--- system can do the rest.
-
--- $syntax
--- - Top level objects must be [] or {}
--- - Lookup: {key}
--- - Optional lookup: {key?} (yielding Maybe a)
--- - Arrst: []
+-- @
+-- extractHobbyist :: 'Value' -> 'Maybe' ('String', 'Int', ['String'])
+-- extractHobbyist value = value '.?' "{name,age,hobbies:[{name}]}"
+-- @
 --
