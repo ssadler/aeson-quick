@@ -15,48 +15,41 @@ Stability:         Experimental
 
 
 Library
-  Exposed-modules:  Data.Aeson.Quick
-  hs-source-dirs:   .
-  Build-Depends:    base >=4 && <5,
-                    aeson,
-                    attoparsec,
-                    deepseq,
-                    text,
-                    unordered-containers,
-                    vector
+  Exposed-modules:    Data.Aeson.Quick
+  hs-source-dirs:     .
+  Build-Depends:      base                  >= 4     && <= 4.9.0.0
+                    , aeson                 >= 0.8   && <  0.12
+                    , attoparsec            >= 0.12  && <  0.14
+                    , deepseq               >= 1.3   && <  1.5
+                    , text                  >= 1.2   && <  1.3
+                    , unordered-containers  >= 0.2.5 && <  0.3
+                    , vector                >= 0.10  && <  0.12
   default-language: Haskell2010
 
 test-suite aeson-quick-test
-  type:             exitcode-stdio-1.0
-  hs-source-dirs:   test
-  main-is:          Test.hs
-  build-depends:    aeson-quick,
-                    base,
-                    bytestring,
-                    aeson,
-                    microlens,
-                    microlens-aeson,
-                    text,
-                    attoparsec,
-                    tasty,
-                    tasty-hunit
+  type:               exitcode-stdio-1.0
+  hs-source-dirs:     test
+  main-is:            Test.hs
+  build-depends:      aeson-quick
+                    , base                  >= 4     && <= 4.9.0.0
+                    , bytestring            >= 0.10  && <  0.11
+                    , aeson                 >= 0.8   && <  0.12
+                    , microlens             >= 0.4   && <  0.5
+                    , text                  >= 1.2   && <  1.3
+                    , attoparsec            >= 0.12  && <  0.14
+                    , tasty                 >= 0.10  && <  0.12
+                    , tasty-hunit           >= 0.9   && <  0.10
   default-language: Haskell2010
 
 benchmark benchmark
-  type:             exitcode-stdio-1.0
-  main-is:          Benchmark.hs
-  hs-source-dirs:   test
-  ghc-options:      -Wall -rtsopts -threaded -with-rtsopts=-N
-  build-depends:    base,
-                    aeson-quick,
-                    aeson,
-                    bytestring,
-                    criterion,
-                    microlens,
-                    microlens-aeson,
-                    text
+  type:               exitcode-stdio-1.0
+  main-is:            Benchmark.hs
+  hs-source-dirs:     test
+  ghc-options:        -Wall -rtsopts -threaded -with-rtsopts=-N
+  build-depends:      aeson-quick
+                    , base                  >= 4     && <= 4.9.0.0
+                    , aeson                 >= 0.8   && <  0.12
+                    , bytestring            >= 0.10  && <  0.11
+                    , criterion             >= 0.1   && <  1.2
+                    , text                  >= 1.2   && <  1.3
   default-language: Haskell2010
-
-source-repository head
-  type:     git
-  location: https://github.com/libscott/aeson-quick

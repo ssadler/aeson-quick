@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 
 module Data.Aeson.Quick
@@ -26,6 +25,7 @@ import qualified Data.Aeson.Types as AT
 import Data.Attoparsec.Text hiding (parse)
 import Data.Char
 import qualified Data.HashMap.Strict as H
+import Data.Monoid
 import Data.String
 import qualified Data.Text as T
 import qualified Data.Vector as V
@@ -36,8 +36,9 @@ import GHC.Generics (Generic)
 data Structure = Obj [(T.Text, Bool, Structure)]
                | Arr Structure
                | Val
- deriving (Eq, Ord, Generic, NFData)
+ deriving (Eq, Ord, Generic)
 
+instance NFData Structure
 
 instance IsString Structure where
   fromString s =
@@ -104,15 +105,15 @@ The (very!) unsafe version of '.?'. This can fail very easily, do not depend on 
 The 'Parser' that executes a 'Structure' against a 'Value' to return an instance of 'FromJSON'. 
 -}
 extract :: FromJSON a => Structure -> Value -> AT.Parser a
-extract structure = ggo structure >=> parseJSON
+extract structure = go structure >=> parseJSON
   where
-    ggo (Obj [s])  = withObject "" (flip look s)
-    ggo (Obj sx)   = withObject "" (forM sx . look) >=> pure . toJSON
-    ggo (Arr s)    = withArray  "" (mapM $ ggo s)   >=> pure . Array
-    ggo Val = pure
+    go (Obj [s])  = withObject "" (flip look s)
+    go (Obj sx)   = withObject "" (forM sx . look) >=> pure . toJSON
+    go (Arr s)    = withArray  "" (V.mapM $ go s)   >=> pure . Array
+    go Val = pure
     look v (k,False,Val) = v .: k
-    look v (k,False,s)   = v .:  k >>= ggo s
-    look v (k,True,s)    = v .:? k >>= maybe (pure Null) (ggo s)
+    look v (k,False,s)   = v .:  k >>= go s
+    look v (k,True,s)    = v .:? k >>= maybe (pure Null) (go s)
 
 
 {- |
@@ -149,13 +150,14 @@ build structure val = go structure val . toJSON
     go (Arr s)    Null       r         = toJSON [go s Null r]
     go (Obj [ks]) (Object v) r         = Object $ update v ks r
     go (Obj keys) Null       r         = go (Obj keys) (Object mempty) r
-    go (Obj keys) (Object v) r         = error "Cannot solve"
     go (Obj ks)   (Object v) (Array r) = Object $
       let maps = zip ks (V.toList r)
        in foldl (\v' (s,r') -> update v' s r') v maps
+    go (Obj keys) (Object v) r         = r
     go a b c = error $ show (a,b,c) -- TODO
     update v (k,_,s) r =
-      H.alter (\mv' -> Just $ go s (maybe Null id mv') r) k v
+      let startVal = go s (H.lookupDefault Null k v) r
+       in H.insert k startVal v
 
 
 -- $use

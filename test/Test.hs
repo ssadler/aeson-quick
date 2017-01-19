@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 
+import Control.Applicative
 
 import Data.Aeson.Quick
 import Data.ByteString.Lazy (ByteString)

@@ -1,6 +1,7 @@
 resolver: lts-7.15
 packages:
 - '.'
-extra-deps: []
+extra-deps:
+    - microlens-0.4.7.0
 flags: {}
 extra-package-dbs: []

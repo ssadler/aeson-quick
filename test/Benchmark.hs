@@ -2,6 +2,7 @@
 
 module Main where
 
+import Control.Applicative
 import Control.Monad
 
 import Criterion.Main
@@ -11,9 +12,6 @@ import Data.Aeson.Types (parseMaybe)
 import qualified Data.ByteString.Lazy as BL
 import Data.Text (Text)
 
-import Lens.Micro
-import Lens.Micro.Aeson
-
 import System.IO.Unsafe
 
 main :: IO ()
@@ -21,7 +19,6 @@ main = defaultMain
   -- TODO: Refactor such that "bench" also tests
   [ bench "aqGetSimple"        $ nf getSimple jsonSimple
   , bench "aesonGetSimple"     $ nf aesonGetSimple jsonSimple
-  , bench "microLensGetSimple" $ nf microLensGetSimple jsonSimple
   , bench "aqGetComplex"       $ nf getComplex jsonComplex
   , bench "aesonGetComplex"    $ nf aesonGetComplex jsonComplex
   , bench "aqSetSimple"        $ nf setSimple simple
@@ -38,10 +35,9 @@ main = defaultMain
     check :: (Value -> Maybe a) -> Value -> a
     check f = maybe (error "Nothing") id . f
 
-    getSimple, aesonGetSimple, microLensGetSimple :: Value -> Integer
+    getSimple, aesonGetSimple :: Value -> Integer
     getSimple = check (.? "{a}")
     aesonGetSimple = check $ parseMaybe $ withObject "" (.: "a")
-    microLensGetSimple = check (^? key "a" . _Integer)
     
     getComplex, aesonGetComplex :: Value -> [(Text,Float,[Text],[Text])]
     getComplex = check (.! "[{id,ppu,batters:{batter:[{id}]},topping:[{id}]}]")
