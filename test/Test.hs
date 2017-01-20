@@ -5,7 +5,6 @@ import Control.Applicative
 
 import Data.Aeson.Quick
 import Data.ByteString.Lazy (ByteString)
-import Data.Either
 
 import Lens.Micro
 
@@ -160,3 +159,7 @@ d s = case decode s of
            Just v -> v
            Nothing -> error $ "Coult not decode JSON: " ++ show s
 
+
+isLeft :: Either a b -> Bool
+isLeft e = case e of Left _ -> True
+                     _      -> False
