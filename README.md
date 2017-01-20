@@ -2,10 +2,8 @@
 
 DSL on top of [aeson](https://hackage.haskell.org/package/aeson) to make working with JSON even easier.
 
-[aeson-quick on Hackage](https://hackage.haskell.org/package/aeson-quick)
-
-![hackage](https://img.shields.io/hackage/v/aeson-quick.svg)
-![travis](https://travis-ci.org/libscott/aeson-quick.svg?branch=master)
+[![hackage](https://img.shields.io/hackage/v/aeson-quick.svg)](https://hackage.haskell.org/package/aeson-quick)
+[![travis](https://travis-ci.org/libscott/aeson-quick.svg?branch=master)](https://travis-ci.org/libscott/aeson-quick/)
 
 # Contributing
 
