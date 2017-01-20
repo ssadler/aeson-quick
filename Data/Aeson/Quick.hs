@@ -76,15 +76,15 @@ Examples assume 'FromJSON' Foo and 'FromJSON' Bar.
 
 Extract key from object:
 
->>> "{key}" .? value :: Maybe Foo
+>>> value .? "{key}" :: Maybe Foo
 
 Extract list of objects:
 
->>> "[{key}]" .? value :: Maybe [Foo]
+>>> value .? "[{key}]" :: Maybe [Foo]
 
 Extract with optional key:
 
->>> "{key,opt?}" .? value :: Maybe (Foo, Maybe Bar)
+>>> value .? "{key,opt?}" :: Maybe (Foo, Maybe Bar)
 -}
 (.?) :: FromJSON a => Value -> Structure -> Maybe a
 (.?) = AT.parseMaybe . flip extract
