@@ -17,13 +17,13 @@ import System.IO.Unsafe
 main :: IO ()
 main = defaultMain
   -- TODO: Refactor such that "bench" also tests
-  [ bench "aqGetSimple"        $ nf getSimple jsonSimple
+  [ bench "quickGetSimple"     $ nf quickGetSimple jsonSimple
   , bench "aesonGetSimple"     $ nf aesonGetSimple jsonSimple
-  , bench "aqGetComplex"       $ nf getComplex jsonComplex
+  , bench "quickGetComplex"    $ nf quickGetComplex jsonComplex
   , bench "aesonGetComplex"    $ nf aesonGetComplex jsonComplex
-  , bench "aqSetSimple"        $ nf setSimple simple
+  , bench "quickSetSimple"     $ nf quickSetSimple simple
   , bench "aesonSetSimple"     $ nf aesonSetSimple simple
-  , bench "aqSetComplex"       $ nf setComplex complex
+  , bench "quickSetComplex"    $ nf quickSetComplex complex
   , bench "aesonSetComplex"    $ nf aesonSetComplex complex
   , bench "parseSimple"        $ nf parseStructure "{a}"
   , bench "parseComplex"       $ nf parseStructure "{a,b:[{c,d:[{e,f}]}]}"
@@ -35,12 +35,12 @@ main = defaultMain
     check :: (Value -> Maybe a) -> Value -> a
     check f = maybe (error "Nothing") id . f
 
-    getSimple, aesonGetSimple :: Value -> Integer
-    getSimple = check (.? "{a}")
+    quickGetSimple, aesonGetSimple :: Value -> Integer
+    quickGetSimple = check (.? "{a}")
     aesonGetSimple = check $ parseMaybe $ withObject "" (.: "a")
     
-    getComplex, aesonGetComplex :: Value -> [(Text,Float,[Text],[Text])]
-    getComplex = check (.! "[{id,ppu,batters:{batter:[{id}]},topping:[{id}]}]")
+    quickGetComplex, aesonGetComplex :: Value -> [(Text,Float,[Text],[Text])]
+    quickGetComplex = check (.! "[{id,ppu,batters:{batter:[{id}]},topping:[{id}]}]")
     aesonGetComplex = check $ parseMaybe $ parseJSON >=> mapM (\o ->
       (,,,) <$> o .: "id" <*> o .: "ppu" <*> batters o <*> toppings o)
       where
@@ -49,13 +49,13 @@ main = defaultMain
         toppings = (.:"topping") >=> mapM (withObject "" (.:"id"))
     
     simple = object ["a" .= Number 1]
-    setSimple, aesonSetSimple :: Value -> Bool
-    setSimple r = r `must` build "{a}" Null (1::Int) 
+    quickSetSimple, aesonSetSimple :: Value -> Bool
+    quickSetSimple r = r `must` build "{a}" Null (1::Int) 
     aesonSetSimple r = r `must` object ["a" .= (1::Int)]
 
     Just complex = decode "{\"a\":1,\"b\":[{\"a\":1},{\"a\":2},{\"a\":3}]}"
-    setComplex, aesonSetComplex :: Value -> Bool
-    setComplex r =
+    quickSetComplex, aesonSetComplex :: Value -> Bool
+    quickSetComplex r =
       let vals = ((1,[1,2,3])::(Int,[Int]))
        in r `must` build "{a,b:[{a}]}" Null vals
     aesonSetComplex r =
