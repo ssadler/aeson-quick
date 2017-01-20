@@ -4,7 +4,6 @@
 module Data.Aeson.Quick
     (
     -- $use
-    -- $examples
       module Ae
     , (.?)
     , (.!)
@@ -93,7 +92,7 @@ Extract with optional key:
 -- TODO: Appropriate infixes?
 
 {- |
-The (very!) unsafe version of '.?'. This can fail very easily, do not depend on this in your program. Will probably be removed.
+Unsafe version of '.?'. Returns 'error' on failure.
 -}
 (.!) :: FromJSON a => Value -> Structure -> a
 (.!) v s = either err id $ AT.parseEither (extract s) v
@@ -179,6 +178,6 @@ build structure val = go structure val . toJSON
 --
 -- @
 -- extractHobbyist :: 'Value' -> 'Maybe' ('String', 'Int', ['String'])
--- extractHobbyist value = value '.?' "{name,age,hobbies:[{name}]}"
+-- extractHobbyist = ('.?' "{name,age,hobbies:[{name}]}")
 -- @
 --
