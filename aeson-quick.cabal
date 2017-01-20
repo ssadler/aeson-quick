@@ -1,5 +1,5 @@
 Name:              aeson-quick
-Version:           0.0.1
+Version:           0.1.1
 Build-Type:        Simple
 Cabal-Version:     >= 1.10
 License:           BSD3
