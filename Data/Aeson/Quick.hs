@@ -31,6 +31,7 @@ import qualified Data.Vector as V
 
 import GHC.Generics (Generic)
 
+import Debug.Trace
 
 data Structure = Obj [(T.Text, Bool, Structure)]
                | Arr Structure
@@ -143,16 +144,16 @@ Note: /Still has undefined behaviours/, not at all stable.
 build :: ToJSON a => Structure -> Value -> a -> Value
 build structure val = go structure val . toJSON
   where
-    go (Val)      _          r         = r
-    go (Arr s)    (Array v)  (Array r) = Array $ V.zipWith (go s) v r 
-    go (Arr s)    Null       (Array r) = Array $ V.map (go s Null) r
-    go (Arr s)    Null       r         = toJSON [go s Null r]
-    go (Obj [ks]) (Object v) r         = Object $ update v ks r
-    go (Obj keys) Null       r         = go (Obj keys) (Object mempty) r
-    go (Obj ks)   (Object v) (Array r) = Object $
+    go (Val)      _          r         = traceShow "a" $ r
+    go (Arr s)    (Array v)  (Array r) = traceShow "b" $ Array $ V.zipWith (go s) v r 
+    go (Arr s)    Null       (Array r) = traceShow "c" $ Array $ V.map (go s Null) r
+    go (Arr s)    Null       r         = traceShow "d" $ toJSON [go s Null r]
+    go (Obj [ks]) (Object v) r         = traceShow "e" $ Object $ update v ks r
+    go (Obj keys) Null       r         = traceShow "f" $ go (Obj keys) (Object mempty) r
+    go (Obj ks)   (Object v) (Array r) = traceShow "g" $ Object $
       let maps = zip ks (V.toList r)
        in foldl (\v' (s,r') -> update v' s r') v maps
-    go (Obj keys) (Object v) r         = r
+    go (Obj keys) (Object v) r         = traceShow "h" $ r
     go a b c = error $ show (a,b,c) -- TODO
     update v (k,_,s) r =
       let startVal = go s (H.lookupDefault Null k v) r

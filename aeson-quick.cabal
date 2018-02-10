@@ -1,5 +1,5 @@
 Name:              aeson-quick
-Version:           0.1.1.2
+Version:           0.1.2.0
 Build-Type:        Simple
 Cabal-Version:     >= 1.16
 License:           BSD3
@@ -18,13 +18,13 @@ Tested-With:       GHC == 7.4.2, GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.2, GHC 
 Library
   Exposed-modules:    Data.Aeson.Quick
   hs-source-dirs:     .
-  Build-Depends:      base                  >= 4      && <= 4.9.0.0
-                    , aeson                 >= 0.8    && <  0.12
-                    , attoparsec            >= 0.12   && <  0.14
-                    , deepseq               >= 1.3    && <  1.5
-                    , text                  >= 1.2    && <  1.3
-                    , unordered-containers  >= 0.2.5  && <  0.3
-                    , vector                >= 0.10   && <  0.12
+  Build-Depends:      base                  >= 4      && <= 5
+                    , aeson
+                    , attoparsec
+                    , deepseq
+                    , text
+                    , unordered-containers
+                    , vector
   if impl(ghc < 7.5)
     Build-Depends:    ghc-prim              >= 0.2
   default-language: Haskell2010
@@ -34,14 +34,14 @@ test-suite aeson-quick-test
   hs-source-dirs:     test
   main-is:            Test.hs
   build-depends:      aeson-quick
-                    , base                  >= 4      && <= 4.9.0.0
-                    , bytestring            >= 0.10.5 && <  0.11
-                    , aeson                 >= 0.8    && <  0.12
-                    , microlens             >= 0.4    && <  0.5
-                    , text                  >= 1.2    && <  1.3
-                    , attoparsec            >= 0.12   && <  0.14
-                    , tasty                 >= 0.10   && <  0.12
-                    , tasty-hunit           >= 0.9    && <  0.10
+                    , base                  >= 4      && <= 5
+                    , bytestring
+                    , aeson
+                    , microlens
+                    , text
+                    , attoparsec
+                    , tasty
+                    , tasty-hunit
   default-language: Haskell2010
 
 benchmark benchmark
@@ -50,11 +50,11 @@ benchmark benchmark
   hs-source-dirs:     test
   ghc-options:        -Wall -rtsopts -threaded -with-rtsopts=-N
   build-depends:      aeson-quick
-                    , base                  >= 4      && <= 4.9.0.0
-                    , aeson                 >= 0.8    && <  0.12
-                    , bytestring            >= 0.10   && <  0.11
-                    , criterion             >= 0.1    && <  1.2
-                    , text                  >= 1.2    && <  1.3
+                    , base                  >= 4      && <= 5
+                    , aeson
+                    , bytestring
+                    , criterion
+                    , text
   default-language: Haskell2010
 
 
