@@ -24,6 +24,7 @@ main = defaultMain $ testGroup "Tests"
   , asLens
   , parseInvalid
   , showStructure
+  , buildZipInfinite
   ]
 
 
@@ -144,6 +145,12 @@ showStructure = testGroup "showStructure"
       show ("[{a:[{b?,c}]}]"::Structure) @?= "[{a:[{b?,c}]}]"
   ]
 
+
+buildZipInfinite :: TestTree
+buildZipInfinite = testGroup "buildZipInfinite"
+  [ testCase "wat" $
+      build "{a:[{b}]}" (d "{\"a\":[{\"b\":1}]}") (repeat Null) @?= (d "{\"a\":[{\"b\":null}]}")
+  ]
 
 one, two :: Int
 one = 1 
