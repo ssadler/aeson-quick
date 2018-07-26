@@ -1,5 +1,5 @@
 Name:              aeson-quick
-Version:           0.1.2.0
+Version:           0.1.2.1
 Build-Type:        Simple
 Cabal-Version:     >= 1.16
 License:           BSD3
@@ -10,7 +10,7 @@ Homepage:          https://github.com/libscott/aeson-quick
 Category:          Text, Web, JSON
 Synopsis:          Quick JSON extractions with Aeson
 Description:       DSL on top of Aeson. This library is /experimental/.
-Copyright:         (c) 2014-2017 Scott Sadler
+Copyright:         (c) 2014-2018 Scott Sadler
 Stability:         Experimental
 Tested-With:       GHC == 7.4.2, GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.2, GHC == 8.0.1
 
