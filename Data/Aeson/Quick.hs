@@ -48,22 +48,45 @@ instance Show Structure where
   show (Val) = "Val"
   show (Arr s) = "[" ++ show s ++ "]"
   show (Obj xs) = "{" ++ drop 1 (concatMap go xs) ++ "}"
-    where go (k,o,s) = "," ++ T.unpack k ++ (if o then "?" else "")
+    where go (k,o,s) = "," ++ showKey (T.unpack k) ++ (if o then "?" else "")
                            ++ (if s == Val then "" else ":" ++ show s)
+          showKey "" = ""
+          showKey (':':xs) = "\\:" ++ showKey xs
+          showKey (',':xs) = "\\," ++ showKey xs
+          showKey (c:xs) = c : showKey xs
     
 
 -- | Parse a structure, can fail
 parseStructure :: T.Text -> Either String Structure
 parseStructure = parseOnly structure
   where
+    structure :: Parser Structure
     structure = object' <|> array <|> val
+
+    object' :: Parser Structure
     object' = Obj <$> ("{" *> sepBy1 lookups (char ',') <* "}")
+
+    array :: Parser Structure
     array = Arr <$> ("[" *> structure <* "]")
-    lookups = (,,) <$> (takeWhile1 isKeyChar)
+
+    val :: Parser Structure
+    val = "." >> pure Val
+
+    lookups :: Parser (T.Text, Bool, Structure)
+    lookups = (,,) <$> (quotedKey <|> plainKey)
                    <*> ("?" *> pure True <|> pure False)
                    <*> (":" *> structure <|> pure Val)
-    isKeyChar = isAlphaNum -- TODO
-    val = "." >> pure Val
+
+    quotedKey :: Parser T.Text
+    quotedKey = "\"" *> scan False testChar <* "\""
+
+    testChar :: Bool -> Char -> Maybe Bool
+    testChar False '"'  = Nothing
+    testChar False '\\' = Just True
+    testChar _ _        = Just False
+
+    plainKey :: Parser T.Text
+    plainKey = takeWhile1 (notInClass "\",:{}?")
 
 
 {- |
@@ -101,7 +124,7 @@ Unsafe version of '.?'. Returns 'error' on failure.
 
 
 {- |
-The 'Parser' that executes a 'Structure' against a 'Value' to return an instance of 'FromJSON'. 
+The 'Parser' that executes a 'Structure' against a 'Value' to return an instance of 'FromJSON'.
 -}
 extract :: FromJSON a => Structure -> Value -> AT.Parser a
 extract structure = go structure >=> parseJSON
@@ -109,7 +132,7 @@ extract structure = go structure >=> parseJSON
     go (Obj [s])  = withObject "" (flip look s)
     go (Obj sx)   = withObject "" (forM sx . look) >=> pure . toJSON
     go (Arr s)    = withArray  "" (V.mapM $ go s)   >=> pure . Array
-    go Val = pure
+    go Val        = pure
     look v (k,False,Val) = v .: k
     look v (k,False,s)   = v .:  k >>= go s
     look v (k,True,s)    = v .:? k >>= maybe (pure Null) (go s)

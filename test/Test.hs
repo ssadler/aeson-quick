@@ -24,6 +24,7 @@ main = defaultMain $ testGroup "Tests"
   , asLens
   , parseInvalid
   , showStructure
+  , quotedKey
   ]
 
 
@@ -142,6 +143,12 @@ showStructure :: TestTree
 showStructure = testGroup "showStructure"
   [ testCase "all" $
       show ("[{a:[{b?,c}]}]"::Structure) @?= "[{a:[{b?,c}]}]"
+  ]
+
+quotedKey :: TestTree
+quotedKey = testGroup "quotedKey"
+  [ testCase "chars" $
+    ("{\"_:,}\"?}") @?= Obj [("_:,}", True, Val)]
   ]
 
 
