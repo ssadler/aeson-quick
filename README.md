@@ -3,7 +3,6 @@
 DSL on top of [aeson](https://hackage.haskell.org/package/aeson) to make working with JSON even easier.
 
 [![hackage](https://img.shields.io/hackage/v/aeson-quick.svg)](https://hackage.haskell.org/package/aeson-quick)
-# [![travis](https://travis-ci.org/libscott/aeson-quick.svg?branch=master)](https://travis-ci.org/libscott/aeson-quick/)
 
 Just about every project I work on these days includes handling JSON somewhere or other. It's everywhere.
 
