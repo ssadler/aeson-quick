@@ -25,12 +25,12 @@ main = defaultMain
   , bench "aesonSetSimple"     $ nf aesonSetSimple simple
   , bench "quickSetComplex"    $ nf quickSetComplex complex
   , bench "aesonSetComplex"    $ nf aesonSetComplex complex
-  , bench "parseSimple"        $ nf parseStructure "{a}"
-  , bench "parseComplex"       $ nf parseStructure "{a,b:[{c,d:[{e,f}]}]}"
+  , bench "parseSimple"        $ nf parseQuick "{a}"
+  , bench "parseComplex"       $ nf parseQuick "{a,b:[{c,d:[{e,f}]}]}"
  ]
   where
     jsonSimple = d "{\"a\":2,\"b\":[1,1]}" :: Value
-    jsonComplex = d $ unsafePerformIO $ BL.readFile "test/complex.json"
+    jsonComplex = d $ unsafePerformIO $ BL.readFile "bench/complex.json"
 
     check :: (Value -> Maybe a) -> Value -> a
     check f = maybe (error "Nothing") id . f
@@ -50,14 +50,14 @@ main = defaultMain
     
     simple = object ["a" .= Number 1]
     quickSetSimple, aesonSetSimple :: Value -> Bool
-    quickSetSimple r = r `must` build "{a}" Null (1::Int) 
+    quickSetSimple r = r `must` ("{a}" .% (1::Int))
     aesonSetSimple r = r `must` object ["a" .= (1::Int)]
 
     Just complex = decode "{\"a\":1,\"b\":[{\"a\":1},{\"a\":2},{\"a\":3}]}"
     quickSetComplex, aesonSetComplex :: Value -> Bool
     quickSetComplex r =
       let vals = ((1,[1,2,3])::(Int,[Int]))
-       in r `must` build "{a,b:[{a}]}" Null vals
+       in r `must` ("{a,b:[{a}]}" .% vals)
     aesonSetComplex r =
       let inner = [object ["a" .= n] | n <- [1,2,3::Int]]
        in r `must` object ["a" .= (1::Int), "b" .= inner]

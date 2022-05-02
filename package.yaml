@@ -1,0 +1,60 @@
+name:                aeson-quick
+version:             0.2.0
+github:              "ssadler/aeson-quick"
+license:             BSD3
+author:              "Scott Sadler"
+maintainer:          "scott@scottsadler.de"
+copyright:           "2022 Scott Sadler"
+category:            JSON
+synopsis:            Quick JSON extractions with Aeson
+
+extra-source-files:
+- README.md
+- LICENSE
+- ChangeLog.md
+
+description:         Small DSL on top of Aeson for casual and concise JSON construction and deconstruction.
+
+dependencies:
+- base >= 4.7 && < 5
+- aeson
+- attoparsec
+- deepseq
+- template-haskell
+- text
+- unordered-containers
+- vector
+
+library:
+  source-dirs: src
+
+
+tests:
+  aeson-quick-test:
+    main:                Test.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - aeson-quick
+    - bytestring
+    - microlens
+    - QuickCheck
+    - tasty
+    - tasty-hunit
+    - tasty-quickcheck
+
+benchmarks:
+  criterion-benchmarks:
+    main:                Benchmark.hs
+    source-dirs:         bench
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - aeson-quick
+    - bytestring
+    - criterion
