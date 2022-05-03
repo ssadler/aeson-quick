@@ -19,8 +19,8 @@ In essence, it allows you to remove the Objects in a json `Value` using a simple
 | Optional key                    | ``{}``                          | ``{foo?}``           | ``Maybe a``      |
 | Multiple keys                   | ``{"foo": *, "bar": *}``        | ``{foo,bar}``        | ``(a, b)``       |
 | Nested object                   | ``{"foo": {"bar": *}}``         | ``{foo:{bar}}``      | ``b``            |
-| Complex object                  | ``[{"foo": *, "bar": [*, *]}]`` &nbsp; &nbsp; | ``[{a,b:[.]}]``      | ``[(a, [c])]``   |
-| Array                           | ``[*, *]``                      | ``[.]``              | ``[a]``          |
+| Complex object                  | ``[{"foo": *, "bar": [*, *]}]`` &nbsp; &nbsp; | ``[{a,b}]``      | ``[(a, [c])]``   |
+| Array of objects                | ``[{"foo": *}]``                | ``[{foo}]``              | ``[a]``          |
 | Array lookup (deconstruct only) | ``[*, *]``                      | ``[.]1``             | ``a``            |
 | Array range (deconstruct only)  | ``[*, *]``                      | ``[.]1-``            | ``[a]``          |
 
@@ -71,4 +71,4 @@ true
 
 ## Performance
 
-Performance is extremely similar to using Aeson functions directly. See Writeup.md for more details.
+Performance is extremely similar to using Aeson functions directly. See Writeup.md for more details. Benchmarks are also included.
